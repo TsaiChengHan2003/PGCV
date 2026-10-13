@@ -1,0 +1,75 @@
+experiment_name: teemi_a01_only_pgcv_qwen3_asr_0.6b
+display_name: TEEMI A01-only PGCV (Qwen3-ASR-0.6B)
+
+student_model: Qwen/Qwen3-ASR-0.6B-hf
+base_model: Qwen/Qwen3-ASR-0.6B-hf
+language: en
+task: transcribe
+max_new_tokens: 256
+
+eval_batch_size: 4
+num_workers: 4
+seed: 42
+
+attention_mode: learned_cefr
+gate:
+  kind: crossattn
+  d_model: 64
+  dropout: 0.3
+  val_fraction: 0.2
+  balanced_classes: true
+  epochs: 200
+  batch_size: 64
+  eval_batch_size: 256
+  lr: 1.0e-3
+  weight_decay: 0.05
+  patience: 20
+
+alpha_round_digits: 2
+lambda_list: [0.25, 0.5, 0.7, 0.75, 1.0]
+beta_list: [0.0, 0.25, 0.5, 0.75, 1.0]
+search_methods: [pgcv]
+report_methods: [theta_pre, theta_ft, global_error_add, pgcv]
+
+levels:
+  - pre-A
+  - A1
+  - A1A2
+  - A2
+  - A2B1
+  - B1
+  - B1B2
+  - B2
+
+global_tau: vectors/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/tau_error_gt.pt
+published_global_lambda_json: results/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/best_lambda_error_gt_add.json
+level_checkpoint_dir: checkpoints/teemi/a01_only/level_error_tau
+level_vector_dir: vectors/teemi/a01_only/level_error_tau
+reuse_embedding_dir: data/teemi/a01_only/speaker_cluster_tau/qwen3_asr_0_6b
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+eval_splits:
+  - key: test
+    label: A01 Internal Test
+  - key: test_a02_external
+    label: A02 External Test
+
+reuse_predictions:
+  test:
+    theta_pre: results/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/predictions_test_theta_pre.csv
+    theta_ft: results/teemi/a01_only/baseline/qwen3_asr_0_6b/predictions_test_theta_ft.csv
+    global_error_add: results/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/predictions_test_error_gt_add.csv
+  test_a02_external:
+    theta_pre: results/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/predictions_test_a02_external_theta_pre.csv
+    theta_ft: results/teemi/a01_only/baseline/qwen3_asr_0_6b/predictions_test_a02_external_theta_ft.csv
+    global_error_add: results/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/predictions_test_a02_external_error_gt_add.csv
+
+data_dir: data/teemi/a01_only/pgcv
+checkpoint_dir: checkpoints/teemi/a01_only/pgcv
+vector_dir: vectors/teemi/a01_only/pgcv
+results_dir: results/teemi/a01_only/pgcv

@@ -1,0 +1,63 @@
+experiment_name: teemi_a01_only_level_error_tau_qwen3_asr_0.6b
+display_name: TEEMI A01-only Per-Level Error-GT Tau (Qwen3-ASR-0.6B)
+
+student_model: Qwen/Qwen3-ASR-0.6B-hf
+base_model: Qwen/Qwen3-ASR-0.6B-hf
+language: en
+task: transcribe
+max_new_tokens: 256
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 200
+max_steps: 2000
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 3
+fp16: false
+bf16: true
+seed: 42
+
+eval_batch_size: 4
+num_workers: 4
+min_subset_utterances: 16
+min_level_dev_utterances: 16
+
+confidence_column: mean_token_logprob
+confidence_quantile: 0.5
+error_buckets: [conf_error, unc_error]
+
+lambda_list: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+adjacent_lambda_list: [0.5, 0.7, 1.0]
+adjacent_alpha_step: 0.25
+focus_levels: [A2, A2B1, B1]
+
+levels:
+  - pre-A
+  - A1
+  - A1A2
+  - A2
+  - A2B1
+  - B1
+  - B1B2
+  - B2
+
+reuse_scored_train: data/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/train_scored.csv
+global_tau: vectors/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/tau_error_gt.pt
+global_lambda_json: results/teemi/a01_only/data_select_tau/qwen3_asr_0_6b/best_lambda_error_gt_add.json
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+eval_splits:
+  - key: test
+    label: A01 Internal Test
+  - key: test_a02_external
+    label: A02 External Test
+
+data_dir: data/teemi/a01_only/level_error_tau
+checkpoint_dir: checkpoints/teemi/a01_only/level_error_tau
+vector_dir: vectors/teemi/a01_only/level_error_tau
+results_dir: results/teemi/a01_only/level_error_tau

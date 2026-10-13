@@ -1,0 +1,50 @@
+experiment_name: teemi_a01_only_data_select_tau
+display_name: TEEMI A01-only Data-Select Signed Tau
+
+student_model: openai/whisper-base
+language: en
+task: transcribe
+
+# θ_now: pretrained Whisper. Subset taus are θ_S - θ_now.
+base_model: openai/whisper-base
+# Reuse the existing A01-only all-data GT finetune instead of retraining.
+all_gt_ckpt: checkpoints/teemi/a01_only/baseline/whisper_base_baseline
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+subset_max_steps: 2000
+subset_warmup_steps: 200
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+fp16: true
+seed: 42
+
+eval_batch_size: 4
+num_workers: 16
+
+confidence_column: mean_token_logprob
+confidence_quantile: 0.5
+min_subset_utterances: 16
+
+lambda_list: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+combo_lambda_fix: [0.0, 0.3, 0.5, 0.7]
+combo_lambda_unc: [0.0, 0.2, 0.4]
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+eval_splits:
+  - key: test
+    label: A01 Internal Test
+  - key: test_a02_external
+    label: A02 External Test
+
+data_dir: data/teemi/a01_only/data_select_tau
+checkpoint_dir: checkpoints/teemi/a01_only/data_select_tau
+vector_dir: vectors/teemi/a01_only/data_select_tau
+results_dir: results/teemi/a01_only/data_select_tau

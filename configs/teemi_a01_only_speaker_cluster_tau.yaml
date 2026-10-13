@@ -1,0 +1,54 @@
+experiment_name: teemi_a01_only_speaker_cluster_tau
+display_name: TEEMI A01-only Speaker-Cluster Gated Tau
+
+student_model: openai/whisper-base
+language: en
+task: transcribe
+max_new_tokens: 256
+
+# θ_now. Per-cluster taus are θ_{error,k} − θ_now.
+base_model: openai/whisper-base
+
+# Optional: reuse the already-scored A01 train / global error-GT from data_select_tau.
+reuse_scored_train: data/teemi/a01_only/data_select_tau/whisper_base/train_scored.csv
+reuse_global_error_ckpt: checkpoints/teemi/a01_only/data_select_tau/whisper_base/error_gt
+
+n_clusters: 3
+kmeans_iters: 100
+kmeans_n_init: 8
+min_cluster_dev_utterances: 16
+min_subset_utterances: 16
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+subset_max_steps: 2000
+subset_warmup_steps: 200
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+fp16: true
+bf16: false
+seed: 42
+
+eval_batch_size: 4
+num_workers: 16
+
+lambda_list: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+eval_splits:
+  - key: test
+    label: A01 Internal Test
+  - key: test_a02_external
+    label: A02 External Test
+
+data_dir: data/teemi/a01_only/speaker_cluster_tau
+checkpoint_dir: checkpoints/teemi/a01_only/speaker_cluster_tau
+vector_dir: vectors/teemi/a01_only/speaker_cluster_tau
+results_dir: results/teemi/a01_only/speaker_cluster_tau

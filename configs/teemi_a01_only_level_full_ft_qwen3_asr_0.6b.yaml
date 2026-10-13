@@ -1,0 +1,58 @@
+experiment_name: teemi_a01_only_level_full_ft_qwen3_asr_0.6b
+display_name: TEEMI A01-only Per-Level Full FT (Qwen3-ASR-0.6B)
+
+# One gold-text full fine-tune per proficiency level.
+# Specialized WER is scored only on utterances of that same level.
+# Needs transformers>=5.13.0.
+
+student_model: Qwen/Qwen3-ASR-0.6B-hf
+base_model: Qwen/Qwen3-ASR-0.6B-hf
+language: en
+task: transcribe
+max_new_tokens: 256
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 3
+fp16: false
+bf16: true
+seed: 42
+
+eval_batch_size: 4
+num_workers: 4
+eval_steps: 500
+save_steps: 1000
+save_total_limit: 2
+load_best_model_at_end: false
+min_train_utterances: 16
+
+levels:
+  - pre-A
+  - A1
+  - A1A2
+  - A2
+  - A2B1
+  - B1
+  - B1B2
+  - B2
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+eval_splits:
+  - key: dev
+    label: A01 Dev
+  - key: test
+    label: A01 Internal Test
+  - key: test_a02_external
+    label: A02 External Test
+
+data_dir: data/teemi/a01_only/level_full_ft
+checkpoint_dir: checkpoints/teemi/a01_only/level_full_ft
+results_dir: results/teemi/a01_only/level_full_ft

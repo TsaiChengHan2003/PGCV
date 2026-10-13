@@ -1,0 +1,71 @@
+experiment_type: supervised_prompt_transfer
+experiment_name: teemi_a01_only_baseline_qwen3_asr_0.6b
+display_name: TEEMI A01-only Baseline (Qwen3-ASR-0.6B)
+
+# transformers-native checkpoint; needs transformers>=5.13.0
+corpus_root: /share/corpus/2023_teemiv2
+data_dir: data/teemi/a01_only
+checkpoint_dir: checkpoints/teemi/a01_only/baseline/qwen3_asr_0_6b
+results_dir: results/teemi/a01_only/baseline/qwen3_asr_0_6b
+
+student_model: Qwen/Qwen3-ASR-0.6B-hf
+language: en
+task: transcribe
+max_new_tokens: 256
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 3
+fp16: false
+bf16: true
+eval_batch_size: 4
+num_workers: 4
+
+source_booklet: A01
+external_test_booklet: A02
+
+split_unit: global_speaker_id
+global_speaker_rule: "share the same uXXX across booklets"
+speaker_split_ratio:
+  train: 0.75
+  dev: 0.10
+  test: 0.15
+seed: 42
+
+score_fields:
+  - weighted_score
+  - proficiency_level
+  - content_score
+  - pronunciation_score
+  - vocabulary_score
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+prompt_transfer_split_groups:
+  dev:
+    - key: dev
+      label: A01 Internal Dev
+  test:
+    - key: test
+      label: A01 Internal Test
+    - key: test_a02_external
+      label: A02 External Test
+
+report_scope_lines:
+  - "Model: Qwen/Qwen3-ASR-0.6B-hf"
+  - "Comparison: pretrained vs A01-train supervised fine-tune (gold text)"
+  - "Source/internal booklet: A01"
+  - "Internal train/dev/test are speaker-disjoint splits inside A01 only"
+  - "External test booklet: A02 (after removing any speaker overlapping with the A01 split universe)"
+  - "Split unit: global speaker id"
+  - "Human-readable output is consolidated into this single markdown report."
+
+checkpoints:
+  baseline: checkpoints/teemi/a01_only/baseline/qwen3_asr_0_6b/qwen3_asr_0_6b_baseline

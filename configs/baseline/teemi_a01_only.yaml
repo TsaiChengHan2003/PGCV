@@ -1,0 +1,80 @@
+experiment_type: supervised_prompt_transfer
+experiment_name: teemi_a01_only_baseline
+display_name: TEEMI A01-only Baseline
+
+corpus_root: /share/corpus/2023_teemiv2
+data_dir: data/teemi/a01_only
+checkpoint_dir: checkpoints/teemi/a01_only/baseline
+results_dir: results/teemi/a01_only/baseline
+
+student_model: openai/whisper-base
+language: en
+task: transcribe
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+fp16: true
+eval_batch_size: 4
+num_workers: 16
+
+source_booklet: A01
+external_test_booklet: A02
+
+split_unit: global_speaker_id
+global_speaker_rule: "share the same uXXX across booklets"
+speaker_split_ratio:
+  train: 0.75
+  dev: 0.10
+  test: 0.15
+seed: 42
+
+score_fields:
+  - weighted_score
+  - proficiency_level
+  - content_score
+  - pronunciation_score
+  - vocabulary_score
+
+outputs:
+  - data/teemi/a01_only/all_utterances.csv
+  - data/teemi/a01_only/excluded_utterances.csv
+  - data/teemi/a01_only/excluded_a02_overlap.csv
+  - data/teemi/a01_only/speaker_manifest.csv
+  - data/teemi/a01_only/train.csv
+  - data/teemi/a01_only/dev.csv
+  - data/teemi/a01_only/test.csv
+  - data/teemi/a01_only/test_a02_external.csv
+  - data/teemi/a01_only/prepare_meta.json
+  - data/teemi/a01_only/dataset_report.md
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+prompt_transfer_split_groups:
+  dev:
+    - key: dev
+      label: A01 Internal Dev
+  test:
+    - key: test
+      label: A01 Internal Test
+    - key: test_a02_external
+      label: A02 External Test
+
+report_scope_lines:
+  - "Model: openai/whisper-base"
+  - "Comparison: pretrained vs A01-train supervised fine-tune (gold text)"
+  - "Source/internal booklet: A01"
+  - "Internal train/dev/test are speaker-disjoint splits inside A01 only"
+  - "External test booklet: A02 (after removing any speaker overlapping with the A01 split universe)"
+  - "Split unit: global speaker id"
+  - "Human-readable output is consolidated into this single markdown report."
+
+checkpoints:
+  baseline: checkpoints/teemi/a01_only/baseline/whisper_base_baseline

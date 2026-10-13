@@ -1,0 +1,59 @@
+experiment_name: teemi_a01_only_level_full_ft_whisper_base
+display_name: TEEMI A01-only Per-Level Full FT (Whisper-base)
+
+# One gold-text full fine-tune per proficiency level.
+# Specialized WER is scored only on utterances of that same level.
+
+student_model: openai/whisper-base
+base_model: openai/whisper-base
+language: en
+task: transcribe
+max_new_tokens: 256
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+# fp16 uses GradScaler, which skips a step whose gradients are Inf/NaN.
+# bf16 wrote those NaNs into the A2 weights.
+fp16: true
+bf16: false
+seed: 42
+
+eval_batch_size: 4
+num_workers: 16
+eval_steps: 500
+save_steps: 500
+save_total_limit: 2
+load_best_model_at_end: true
+min_train_utterances: 16
+
+levels:
+  - pre-A
+  - A1
+  - A1A2
+  - A2
+  - A2B1
+  - B1
+  - B1B2
+  - B2
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+eval_splits:
+  - key: dev
+    label: A01 Dev
+  - key: test
+    label: A01 Internal Test
+  - key: test_a02_external
+    label: A02 External Test
+
+data_dir: data/teemi/a01_only/level_full_ft
+checkpoint_dir: checkpoints/teemi/a01_only/level_full_ft
+results_dir: results/teemi/a01_only/level_full_ft

@@ -1,0 +1,47 @@
+experiment_name: sandi_overall_cefr_pgcv_embeddings_whisper_base
+display_name: S&I Overall-CEFR PGCV Embeddings (Whisper-base)
+
+student_model: openai/whisper-base
+base_model: openai/whisper-base
+language: en
+task: transcribe
+max_new_tokens: 256
+gate_id_column: session_id
+
+reuse_scored_train: data/sandi/data_select_tau/whisper_base/train_scored.csv
+reuse_global_error_ckpt: checkpoints/sandi/data_select_tau/whisper_base/error_gt
+
+n_clusters: 3
+kmeans_iters: 100
+kmeans_n_init: 8
+min_cluster_dev_utterances: 16
+min_subset_utterances: 16
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 200
+max_steps: 2000
+subset_max_steps: 2000
+subset_warmup_steps: 200
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+fp16: true
+bf16: false
+seed: 42
+
+eval_batch_size: 16
+num_workers: 16
+lambda_list: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+
+splits:
+  train: data/sandi/asr_overall/train.csv
+  dev: data/sandi/asr_overall/dev.csv
+  eval: data/sandi/asr_overall/eval.csv
+
+eval_splits:
+  - key: eval
+    label: S&I eval-asr (overall CEFR)
+
+data_dir: data/sandi/overall_cefr/pgcv_embeddings
+checkpoint_dir: checkpoints/sandi/overall_cefr/pgcv_embeddings
+vector_dir: vectors/sandi/overall_cefr/pgcv_embeddings
+results_dir: results/sandi/overall_cefr/pgcv_embeddings

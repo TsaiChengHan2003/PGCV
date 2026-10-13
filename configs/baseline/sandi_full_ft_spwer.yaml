@@ -1,0 +1,33 @@
+# SANDI all-data Whisper-base FT, scored with official long-form SpWER.
+# Train/dev CSVs are STM scored segments with TEEMI-style label cleaning.
+
+experiment_name: sandi_full_ft_spwer
+display_name: SANDI full FT + official SpWER (Whisper-base)
+
+student_model: openai/whisper-base
+language: en
+task: transcribe
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+per_device_train_batch_size: 12
+per_device_eval_batch_size: 16
+gradient_accumulation_steps: 1
+fp16: true
+seed: 42
+num_workers: 16
+
+save_steps: 250
+eval_steps: 250
+save_total_limit: 12
+max_grad_norm: 1.0
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+
+train_csv: data/sandi/asr/train.csv
+eval_csv: data/sandi/asr/dev.csv
+output_dir: checkpoints/sandi/spwer/whisper_base/full_ft
+
+results_dir: results/sandi/spwer/whisper_base/full_ft

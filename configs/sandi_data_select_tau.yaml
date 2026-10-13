@@ -1,0 +1,88 @@
+experiment_name: sandi_data_select_tau
+display_name: SANDI Data-Select Signed Tau (Whisper-base)
+
+student_model: openai/whisper-base
+language: en
+task: transcribe
+base_model: openai/whisper-base
+# Train all-data GT on SANDI train-asr. Do not reuse the TEEMI checkpoint.
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+subset_max_steps: 2000
+subset_warmup_steps: 200
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+fp16: true
+seed: 42
+
+eval_batch_size: 16
+num_workers: 16
+
+confidence_column: mean_token_logprob
+confidence_quantile: 0.5
+min_subset_utterances: 16
+
+lambda_list: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+combo_lambda_fix: [0.0, 0.3, 0.5, 0.7]
+combo_lambda_unc: [0.0, 0.2, 0.4]
+
+# Paper table: pretrained vs in-domain error-GT τ (all-data GT as control).
+enabled_train_jobs: [all_gt, error_gt]
+enabled_methods: [theta_pre, all_gt_add, error_gt_add]
+
+splits:
+  train: data/sandi/asr/train.csv
+  dev: data/sandi/asr/dev.csv
+  eval: data/sandi/asr/eval.csv
+
+eval_splits:
+  - key: eval
+    label: SANDI eval-asr
+
+data_dir: data/sandi/data_select_tau
+checkpoint_dir: checkpoints/sandi/data_select_tau
+vector_dir: vectors/sandi/data_select_tau
+results_dir: results/sandi/data_select_tau
+
+score_train_desc: score SANDI train-asr
+selection_split_label: SANDI train-asr only
+lambda_selection_label: SANDI dev-asr
+proficiency_section_suffix: by SANDI CEFR
+
+stage_titles:
+  1: Score SANDI train-asr confidence × correctness
+  2: Materialize selection buckets and random control
+  3: Fine-tune subset models
+  4: Compute signed taus and cosine
+  5: Select lambda on SANDI dev-asr
+  6: Evaluate SANDI eval-asr and write report
+
+report_scope:
+  - "Corpus: SANDI 2025 official train-asr → buckets; dev-asr → λ; eval-asr → report."
+  - "CEFR is the utterance **part** SLA label (A2 / A2+ / B1 / B1+ / B2 / B2+ / C1 / C1+). Not remapped onto TEEMI booklet levels."
+  - "`τ = θ_S − θ_now` is **added**. Primary correction vector is error-GT (`conf_error ∪ unc_error`)."
+  - "Standalone full FT + official SpWER is `run_sandi_whisper_base_full_ft_spwer.sh`."
+  - "Train/dev/eval CSVs are STM scored segments: (%hesitation%)→uh; drop <tags>/%; drop IGNORE and >30s."
+  - "Do not mix TEEMI audio into SANDI train. Corpus `/share/corpus/sandi2025-challenge` is read-only."
+  - "θ_now / student: `openai/whisper-base`"
+
+pipeline_flow_lines:
+  - "# SANDI in-domain data-select τ (Whisper-base)"
+  - ""
+  - "Geometry: `θ' = θ_now + λ τ`, `τ = θ_error-GT − θ_now`."
+  - "λ is chosen only on official **dev-asr**. eval-asr is held out."
+  - "Labels: SANDI part CEFR. TEEMI booklet labels are a different annotation system (footnote only)."
+  - "Audio is referenced from `/share/corpus/sandi2025-challenge`; all writes stay in this repo."
+  - ""
+  - "```"
+  - "prepare_sandi_asr_csv"
+  - "    ├─[1] score train-asr with θ_now"
+  - "    ├─[2] error-GT = conf_error ∪ unc_error"
+  - "    ├─[3] FT all-data GT + error-GT"
+  - "    ├─[4] τ = θ_S − θ_now"
+  - "    ├─[5] λ on dev-asr"
+  - "    └─[6] eval-asr by SANDI CEFR"
+  - "```"

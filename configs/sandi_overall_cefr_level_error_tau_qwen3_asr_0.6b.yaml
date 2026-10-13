@@ -1,0 +1,50 @@
+experiment_name: sandi_overall_cefr_level_error_tau_qwen3_asr_0.6b
+display_name: S&I Overall-CEFR Per-Level Error-GT Tau (Qwen3-ASR-0.6B)
+
+student_model: Qwen/Qwen3-ASR-0.6B-hf
+base_model: Qwen/Qwen3-ASR-0.6B-hf
+language: en
+task: transcribe
+max_new_tokens: 256
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 200
+max_steps: 2000
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 12
+fp16: false
+bf16: true
+seed: 42
+
+eval_batch_size: 4
+num_workers: 2
+min_subset_utterances: 16
+min_level_dev_utterances: 16
+confidence_column: mean_token_logprob
+confidence_quantile: 0.5
+error_buckets: [conf_error, unc_error]
+lambda_list: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+adjacent_lambda_list: [0.5, 0.7, 1.0]
+adjacent_alpha_step: 0.25
+focus_levels: []
+
+levels: [A2, A2+, B1, B1+, B2, B2+, C1, C1+]
+
+reuse_scored_train: data/sandi/data_select_tau/qwen3_asr_0_6b/train_scored.csv
+refresh_reused_scored_metadata: true
+global_tau: vectors/sandi/data_select_tau/qwen3_asr_0_6b/tau_error_gt.pt
+
+splits:
+  train: data/sandi/asr_overall/train.csv
+  dev: data/sandi/asr_overall/dev.csv
+  eval: data/sandi/asr_overall/eval.csv
+
+eval_splits:
+  - key: eval
+    label: S&I eval-asr (overall CEFR)
+
+data_dir: data/sandi/overall_cefr/level_error_tau
+checkpoint_dir: checkpoints/sandi/overall_cefr/level_error_tau
+vector_dir: vectors/sandi/overall_cefr/level_error_tau
+results_dir: results/sandi/overall_cefr/level_error_tau

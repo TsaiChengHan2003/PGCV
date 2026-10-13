@@ -1,0 +1,54 @@
+experiment_name: sandi_overall_cefr_pgcv_qwen3_asr_0.6b
+display_name: S&I Overall-CEFR PGCV (Qwen3-ASR-0.6B)
+
+student_model: Qwen/Qwen3-ASR-0.6B-hf
+base_model: Qwen/Qwen3-ASR-0.6B-hf
+language: en
+task: transcribe
+max_new_tokens: 256
+gate_id_column: session_id
+selection_split_label: S&I dev-asr (overall CEFR)
+
+eval_batch_size: 4
+num_workers: 2
+seed: 42
+attention_mode: learned_cefr
+gate:
+  kind: crossattn
+  d_model: 64
+  dropout: 0.3
+  val_fraction: 0.2
+  balanced_classes: true
+  epochs: 200
+  batch_size: 64
+  eval_batch_size: 256
+  lr: 1.0e-3
+  weight_decay: 0.05
+  patience: 20
+
+alpha_round_digits: 1
+lambda_list: [0.25, 0.5, 0.7, 0.75, 1.0]
+beta_list: [0.0, 0.25, 0.5, 0.75, 1.0]
+search_methods: [pgcv]
+report_methods: [theta_pre, global_error_add, pgcv]
+levels: [A2, A2+, B1, B1+, B2, B2+, C1, C1+]
+
+global_tau: vectors/sandi/data_select_tau/qwen3_asr_0_6b/tau_error_gt.pt
+published_global_lambda: 0.7
+level_checkpoint_dir: checkpoints/sandi/overall_cefr/level_error_tau
+level_vector_dir: vectors/sandi/overall_cefr/level_error_tau
+reuse_embedding_dir: data/sandi/overall_cefr/pgcv_embeddings/qwen3_asr_0_6b
+
+splits:
+  train: data/sandi/asr_overall/train.csv
+  dev: data/sandi/asr_overall/dev.csv
+  eval: data/sandi/asr_overall/eval.csv
+
+eval_splits:
+  - key: eval
+    label: S&I eval-asr (overall CEFR)
+
+data_dir: data/sandi/overall_cefr/pgcv
+checkpoint_dir: checkpoints/sandi/overall_cefr/pgcv
+vector_dir: vectors/sandi/overall_cefr/pgcv
+results_dir: results/sandi/overall_cefr/pgcv

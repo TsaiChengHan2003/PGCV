@@ -1,0 +1,70 @@
+experiment_name: teemi_a01_only_level_error_tau
+display_name: TEEMI A01-only Per-Level Error-GT Tau (cross-apply + adjacent mix)
+
+# Diagnostic before any NN gate:
+#   1) train one error-GT τ per CEFR bucket (same recipe as global data-select)
+#   2) cross-apply τ_j onto gold level i (λ chosen on A01 dev of i)
+#   3) for a fixed assessment level L, search α in the adjacent simplex
+# Gold CEFR is only used to slice training / evaluation buckets. No router yet.
+
+student_model: openai/whisper-base
+base_model: openai/whisper-base
+language: en
+task: transcribe
+max_new_tokens: 256
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 200
+max_steps: 2000
+per_device_train_batch_size: 12
+gradient_accumulation_steps: 1
+fp16: true
+seed: 42
+
+eval_batch_size: 4
+num_workers: 16
+min_subset_utterances: 16
+min_level_dev_utterances: 16
+
+confidence_column: mean_token_logprob
+confidence_quantile: 0.5
+error_buckets: [conf_error, unc_error]
+
+lambda_list: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+adjacent_lambda_list: [0.5, 0.7, 1.0]
+adjacent_alpha_step: 0.25
+# Empty = every level with enough dev data and at least one trained neighbor.
+focus_levels: [A2, A2B1, B1]
+
+levels:
+  - pre-A
+  - A1
+  - A1A2
+  - A2
+  - A2B1
+  - B1
+  - B1B2
+  - B2
+
+# Reuse the global data-select score + error-GT τ so the comparison is fair.
+reuse_scored_train: data/teemi/a01_only/data_select_tau/whisper_base/train_scored.csv
+global_tau: vectors/teemi/a01_only/data_select_tau/whisper_base/tau_error_gt.pt
+global_lambda_json: results/teemi/a01_only/data_select_tau/whisper_base/best_lambda_error_gt_add.json
+
+splits:
+  train: data/teemi/a01_only/train.csv
+  dev: data/teemi/a01_only/dev.csv
+  test: data/teemi/a01_only/test.csv
+  test_a02_external: data/teemi/a01_only/test_a02_external.csv
+
+eval_splits:
+  - key: test
+    label: A01 Internal Test
+  - key: test_a02_external
+    label: A02 External Test
+
+data_dir: data/teemi/a01_only/level_error_tau
+checkpoint_dir: checkpoints/teemi/a01_only/level_error_tau
+vector_dir: vectors/teemi/a01_only/level_error_tau
+results_dir: results/teemi/a01_only/level_error_tau

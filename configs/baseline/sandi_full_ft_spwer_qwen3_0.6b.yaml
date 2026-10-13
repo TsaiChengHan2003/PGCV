@@ -1,0 +1,33 @@
+# SANDI all-data Qwen3-ASR-0.6B FT, scored with official full-file SpWER.
+# Train/dev CSVs are STM scored segments with TEEMI-style label cleaning.
+
+experiment_name: sandi_full_ft_spwer_qwen3_0.6b
+display_name: SANDI full FT + official SpWER (Qwen3-ASR-0.6B)
+
+student_model: Qwen/Qwen3-ASR-0.6B-hf
+language: en
+task: transcribe
+
+learning_rate: 1.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 4000
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 4
+gradient_accumulation_steps: 12
+fp16: false
+bf16: true
+seed: 42
+num_workers: 2
+
+save_steps: 250
+eval_steps: 250
+save_total_limit: 12
+max_grad_norm: 1.0
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+gradient_checkpointing: false
+
+train_csv: data/sandi/asr/train.csv
+eval_csv: data/sandi/asr/dev.csv
+output_dir: checkpoints/sandi/spwer/qwen3_asr_0_6b/full_ft
